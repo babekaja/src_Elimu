@@ -34,4 +34,10 @@ data class User(
             createdAt = ""
         )
     }
+    
+    val isComplete: Boolean
+        get() = name.isNotBlank() && 
+                email.isNotBlank() && 
+                track.isNotBlank() && 
+                mentorName.isNotBlank()
 }
