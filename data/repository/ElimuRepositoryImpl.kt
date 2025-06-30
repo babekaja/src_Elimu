@@ -9,84 +9,95 @@ import com.kotlingdgocucb.elimuApp.domain.model.User
 import com.kotlingdgocucb.elimuApp.domain.utils.Result
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ElimuRepositoryImpl(
+@Singleton
+class ElimuRepositoryImpl @Inject constructor(
     private val datastore: DataStore<Preferences>,
 ) : ElimuRepository {
 
+    companion object {
+        private const val TAG = "ElimuRepositoryImpl"
+    }
+
     override suspend fun setCurrentUser(user: User?): Result<User?> {
         return try {
-            Log.d("ElimuRepositoryImpl", "Début de setCurrentUser avec user: $user")
+            Log.d(TAG, "Setting current user: $user")
             datastore.edit { preferences ->
-                preferences[PreferenceKeys.userName] = user?.name ?: ""
-                preferences[PreferenceKeys.userEmail] = user?.email ?: ""
-                preferences[PreferenceKeys.userProfilePicture] = user?.profile_picture_uri ?: ""
-                preferences[PreferenceKeys.isLoggedIn] = user?.isLoggedIn ?: false
-                preferences[PreferenceKeys.userTrack] = user?.track ?: ""
-                preferences[PreferenceKeys.userMentor] = user?.mentor_name ?: ""
+                if (user != null) {
+                    preferences[PreferenceKeys.userName] = user.name
+                    preferences[PreferenceKeys.userEmail] = user.email
+                    preferences[PreferenceKeys.userProfilePicture] = user.profilePictureUri
+                    preferences[PreferenceKeys.isLoggedIn] = user.isLoggedIn
+                    preferences[PreferenceKeys.userTrack] = user.track
+                    preferences[PreferenceKeys.userMentor] = user.mentorName
+                } else {
+                    // Clear all user data
+                    preferences.clear()
+                }
             }
-            Log.d("ElimuRepositoryImpl", "Utilisateur enregistré avec succès")
+            Log.d(TAG, "User saved successfully")
             Result.Success(user)
         } catch (e: Exception) {
-            Log.e("ElimuRepositoryImpl", "Erreur lors de la modification de l'utilisateur", e)
-            Result.Error("Erreur lors de la modification de l'utilisateur : ${e.message}")
+            Log.e(TAG, "Error saving user", e)
+            Result.Error("Error saving user: ${e.message}")
         }
     }
 
     override suspend fun getCurrentUser(): Result<User?> {
         return try {
-            Log.d("ElimuRepositoryImpl", "Début de getCurrentUser")
+            Log.d(TAG, "Getting current user")
             val currentUser = datastore.data.map { preferences ->
-                User(
-                    id = 0,
-                    name = preferences[PreferenceKeys.userName] ?: "",
-                    email = preferences[PreferenceKeys.userEmail] ?: "",
-                    profile_picture_uri = preferences[PreferenceKeys.userProfilePicture] ?: "",
-                    isLoggedIn = preferences[PreferenceKeys.isLoggedIn] == true,
-                    track = preferences[PreferenceKeys.userTrack] ?: "",
-                    mentor_name = preferences[PreferenceKeys.userMentor] ?: "",
-                    createdAt = "",
-                    mentor_email = "",
-                    mentor_profileUrl = "",
-                    mentor_experience = "",
-                    mentor_description = "",
-                    mentor_githubUrl = "",
-                    mentor_linkedinUrl = "",
-                    mentor_xUrl = "",
-                    mentor_instagramUrl = ""
-                )
+                val isLoggedIn = preferences[PreferenceKeys.isLoggedIn] ?: false
+                if (isLoggedIn) {
+                    User(
+                        id = 0,
+                        name = preferences[PreferenceKeys.userName] ?: "",
+                        email = preferences[PreferenceKeys.userEmail] ?: "",
+                        profilePictureUri = preferences[PreferenceKeys.userProfilePicture] ?: "",
+                        isLoggedIn = isLoggedIn,
+                        track = preferences[PreferenceKeys.userTrack] ?: "",
+                        mentorName = preferences[PreferenceKeys.userMentor] ?: "",
+                        createdAt = "",
+                        mentorEmail = "",
+                        mentorProfileUrl = "",
+                        mentorExperience = "",
+                        mentorDescription = "",
+                        mentorGithubUrl = "",
+                        mentorLinkedinUrl = "",
+                        mentorXUrl = "",
+                        mentorInstagramUrl = ""
+                    )
+                } else {
+                    null
+                }
             }.first()
 
-            Log.d("ElimuRepositoryImpl", "Utilisateur récupéré: $currentUser")
-            Result.Success(if (currentUser.isLoggedIn) currentUser else null)
+            Log.d(TAG, "Retrieved user: $currentUser")
+            Result.Success(currentUser)
         } catch (e: Exception) {
-            Log.e("ElimuRepositoryImpl", "Erreur lors de la récupération de l'utilisateur", e)
-            Result.Error("Erreur lors de la récupération de l'utilisateur : ${e.message}")
+            Log.e(TAG, "Error retrieving user", e)
+            Result.Error("Error retrieving user: ${e.message}")
         }
     }
 
-    /**
-     * Cette fonction vérifie si l'utilisateur stocké est différent de celui passé en paramètre.
-     * En cas de différence, elle met à jour le DataStore et retourne le nouvel utilisateur.
-     * Sinon, elle retourne l'utilisateur existant.
-     */
     override suspend fun updateOrSyncCurrentUser(newUser: User?): Result<User?> {
         return try {
-            Log.d("ElimuRepositoryImpl", "Début de updateOrSyncCurrentUser avec newUser: $newUser")
+            Log.d(TAG, "Updating/syncing user: $newUser")
             val currentUserResult = getCurrentUser()
             val currentUser = if (currentUserResult is Result.Success) currentUserResult.data else null
 
             if (currentUser != newUser) {
-                // Des modifications ont été détectées, on met à jour.
-                Log.d("ElimuRepositoryImpl", "Modification détectée, mise à jour de l'utilisateur.")
+                Log.d(TAG, "User changes detected, updating...")
                 setCurrentUser(newUser)
             } else {
-                Log.d("ElimuRepositoryImpl", "Aucune modification détectée, utilisateur inchangé: $currentUser")
+                Log.d(TAG, "No user changes detected")
                 currentUserResult
             }
         } catch (e: Exception) {
-            Log.e("ElimuRepositoryImpl", "Erreur lors de la mise à jour de l'utilisateur", e)
-            Result.Error("Erreur lors de la mise à jour de l'utilisateur : ${e.message}")
+            Log.e(TAG, "Error updating user", e)
+            Result.Error("Error updating user: ${e.message}")
         }
     }
 }

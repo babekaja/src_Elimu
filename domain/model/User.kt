@@ -5,24 +5,33 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class User(
-    val id: Int = 0, // Valeur par défaut,
+    val id: Int = 0,
     val name: String,
     val email: String,
     @SerialName("is_logged_in") val isLoggedIn: Boolean,
-    val profile_picture_uri: String,
+    @SerialName("profile_picture_uri") val profilePictureUri: String,
     val track: String,
-    val level: String,
-    val mentor_name: String,
+    val level: String = "",
+    @SerialName("mentor_name") val mentorName: String,
     @SerialName("created_at") val createdAt: String,
-    val mentor_email : String = "",
-
-
-    val mentor_profileUrl: String = "",
-    val mentor_experience: String = "",
-    val mentor_description: String = "",
-    val mentor_githubUrl: String = "",
-    val mentor_linkedinUrl: String = "",
-    val mentor_xUrl: String = "",
-    val mentor_instagramUrl: String = "",
-
-    )
+    @SerialName("mentor_email") val mentorEmail: String = "",
+    @SerialName("mentor_profile_url") val mentorProfileUrl: String = "",
+    @SerialName("mentor_experience") val mentorExperience: String = "",
+    @SerialName("mentor_description") val mentorDescription: String = "",
+    @SerialName("mentor_github_url") val mentorGithubUrl: String = "",
+    @SerialName("mentor_linkedin_url") val mentorLinkedinUrl: String = "",
+    @SerialName("mentor_x_url") val mentorXUrl: String = "",
+    @SerialName("mentor_instagram_url") val mentorInstagramUrl: String = ""
+) {
+    companion object {
+        fun createEmpty() = User(
+            name = "",
+            email = "",
+            isLoggedIn = false,
+            profilePictureUri = "",
+            track = "",
+            mentorName = "",
+            createdAt = ""
+        )
+    }
+}
